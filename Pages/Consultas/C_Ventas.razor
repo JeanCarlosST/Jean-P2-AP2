@@ -1,0 +1,127 @@
+﻿@page "/c_ventas"
+
+<EditForm Model="Ventas">
+
+    <div class="row d-flex justify-content-center">
+
+        <div class="col-11">
+
+            <div class="card">
+
+                <div class="card-header">
+                    <h3>Consulta de ventas</h3>
+                </div>
+
+                <div class="card-body">
+                    <form>
+                        <div class="row">
+                            <div class="input-group my-2 mr-2 col-3">
+                                <label class="input-group-text">Filtrar por fecha</label>
+                                <div class="input-group-text">
+                                    <InputCheckbox class="form-check-input m-0" @bind-Value="@FiltrarFecha" />
+                                </div>
+                            </div>
+
+                            <div class="input-group my-2 col">
+                                <label class="input-group-text">Desde</label>
+                                <InputDate class="form-control" @bind-Value="FechaDesde" />
+                                <label class="input-group-text">Hasta</label>
+                                <InputDate class="form-control" @bind-Value="FechaHasta" />
+                            </div>
+                        </div>
+
+                        <div class="input-group my-2">
+                            <InputSelect class="form-control col-3" @bind-Value="Filtro" style="width:150px;">
+                                <option value="0">Filtro</option>
+                                <option value="1">Cliente</option>
+                            </InputSelect>
+                            <InputText class="form-control" @bind-Value="Criterio" placeholder="Criterio" />
+                            <button class="btn btn-primary" type="button" @onclick="Buscar">Buscar</button>
+                        </div>
+
+                        <table class="table mt-4">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Fecha</th>
+                                    <th>Cliente</th>
+                                    <th>Monto</th>
+                                    <th>Balance</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var venta in Ventas)
+                                {
+                                    var cliente = ClientesBLL.Buscar(venta.ClienteID);
+                                    <tr>
+                                        <th class="align-middle">@venta.VentaID</th>
+                                        <td class="align-middle">@venta.Fecha</td>
+                                        <td class="align-middle">@cliente.Nombres</td>
+                                        <td class="align-middle">@venta.Monto.ToString("N2")</td>
+                                        <td class="align-middle">@venta.Balance.ToString("N2")</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</EditForm>
+@code {
+    public List<Ventas> Ventas { get; set; }
+    public string Filtro { get; set; }
+    public string Criterio { get; set; }
+    public DateTime FechaDesde { get; set; } = DateTime.Now;
+    public DateTime FechaHasta { get; set; } = DateTime.Now;
+    public bool FiltrarFecha { get; set; }
+
+    protected override void OnInitialized()
+    {
+        Nuevo();
+    }
+
+    private void Nuevo()
+    {
+        Ventas = new List<Ventas>();
+        Filtro = "0";
+        Criterio = string.Empty;
+    }
+
+    public void Buscar()
+    {
+        Ventas = new List<Ventas>();
+
+        SetearFechas();
+
+        if (Criterio.Length > 0)
+        {
+            switch (Filtro)
+            {
+                case "0":
+                    Ventas = VentasBLL.ObtenerLista(v => true);
+                    break;
+
+                case "1":
+                    //Ventas = VentasBLL.ObtenerLista(v => v.Total >= int.Parse(Criterio));
+                    break;
+            }
+        }
+        else
+        {
+            Ventas = VentasBLL.ObtenerLista(v => true);
+        }
+
+        if (FiltrarFecha)
+            Ventas = Ventas.Where(v => v.Fecha >= FechaDesde && v.Fecha <= FechaHasta).ToList();
+    }
+
+    private void SetearFechas()
+    {
+        FechaDesde = new DateTime(FechaDesde.Year, FechaDesde.Month, FechaDesde.Day, 0, 0, 0);
+        FechaHasta = new DateTime(FechaHasta.Year, FechaHasta.Month, FechaHasta.Day, 23, 59, 59);
+    }
+}

@@ -1,0 +1,162 @@
+﻿@page "/r_cobros"
+
+<EditForm Model="Cobro" OnValidSubmit="Guardar">
+    <DataAnnotationsValidator/>
+
+    <div class="container">
+
+        <div class="row">
+
+            <div class="col">
+
+                <div class="card">
+
+                    <div class="card-header">
+                        <h3>Registro de cobros</h3>
+                    </div>
+
+                    <div class="card-body">
+
+                        <form>
+
+                            <div class="form-row justify-content-between">
+
+                                <div class="form-group">
+                                    <label>Cobro ID:</label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" />
+                                        <button class="btn btn-warning" type="button" @onclick="Buscar">
+                                            <i class="oi oi-magnifying-glass mr-2" />Buscar
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div class="form-group">
+                                    <label>Fecha:</label>
+                                    <input type="date" class="form-control" />
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Cliente:</label>
+                                <select class="form-control">
+                                    @foreach (var cliente in Clientes)
+                                    {
+                                        <option value="@cliente.ClienteID">@cliente.Nombres</option>
+                                    }
+                                </select>
+                            </div>
+
+                            <fieldset class="form-group border border-2 p-2">
+
+                                <legend class="w-auto">
+                                    Facturas pendientes
+                                </legend>
+
+                                <table class="table mb-0">
+                                    <thead>
+                                        <tr>
+                                            <th class="text-center">ID</th>
+                                            <th class="text-center">Fecha</th>
+                                            <th class="text-center">Monto</th>
+                                            <th class="text-center">Balance</th>
+                                            <th class="text-center">Cobrado</th>
+                                            <th class="text-center">Pagar</th>
+                                        </tr>
+                                    </thead>
+
+                                    <tbody>
+
+
+                                    </tbody>
+                                </table>
+                                
+                            </fieldset> 
+
+                        </form>
+
+                    </div>
+
+                    <div class="card-footer">
+
+                        <form>
+                            
+                            <div class="form-row justify-content-between">
+
+                                <div class="form-group">
+                                    <label>Totales:</label>
+                                    <input type="number" class="form-control" readonly />
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label></label>
+                                    <input type="number" class="form-control" readonly />
+                                </div>
+                            </div>
+                        
+                            <div class="form-group">
+                                <label>Observaciones:</label>
+                                <textArea class="form-control"/>
+                            </div>
+
+                        </form>
+
+                    </div>
+
+                    <div class="card-footer">
+                        <div class="row justify-content-center">
+                            <button class="btn btn-primary col-3" type="button" @onclick="Nuevo">
+                                <i class="oi oi-file mr-2" />Nuevo
+                            </button>
+
+                            <button class="btn btn-success col-3 mx-2">
+                                <i class="oi oi-account-login mr-2" style="transform:rotate(90deg)" />Guardar
+                            </button>
+
+                            <button class="btn btn-danger col-3" type="button" @onclick="Eliminar">
+                                <i class="oi oi-trash mr-2" />Eliminar
+                            </button>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</EditForm>
+
+@code {
+    public Cobros Cobro { get; set; } = new Cobros();
+    public List<Clientes> Clientes { get; set; } = new List<Clientes>();
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+    }
+
+    public void Buscar()
+    {
+
+    }
+
+    public void Nuevo()
+    {
+
+    }
+
+    public void Guardar()
+    {
+
+    }
+
+    public void Eliminar()
+    {
+
+    }
+}
