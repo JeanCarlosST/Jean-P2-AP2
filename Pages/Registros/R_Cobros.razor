@@ -1,5 +1,5 @@
 ﻿@page "/r_cobros"
-
+@inject IToastService toast
 <EditForm Model="Cobro" OnValidSubmit="Guardar">
     <DataAnnotationsValidator/>
 
@@ -67,6 +67,23 @@
 
                                     <tbody>
 
+                                        @foreach(var detalle in Detalle)
+                                        {
+                                            <tr>
+                                                <td class="text-center align-baseline">@detalle.Venta.VentaID</td>
+                                                <td class="text-center align-baseline">@detalle.Venta.Fecha</td>
+                                                <td class="text-center align-baseline">@detalle.Venta.Monto</td>
+                                                <td class="text-center align-baseline">@detalle.Venta.Balance</td>
+                                                <td class="d-flex justify-content-center">
+                                                    <input type="number" class="form-control text-right w-50" value="@detalle.Cobrado" min="1" max="99999"
+                                                           @onchange="eventArgs => { detalle.Cobrado = Convert.ToSingle(eventArgs.Value); CobrarVenta(detalle); }"/>
+                                                    @*<InputNumber class="form-control w-50" @onchange="AjustarTotales" @bind-Value="detalle.Cobrado"/>*@
+                                                </td>
+                                                <td class="text-center">
+                                                    <input type="checkbox" class="form-check-input" value="@detalle.Pagado" @onchange="eventArgs => { CobrarTotalVenta(detalle, eventArgs.Value); }"/>
+                                                </td>
+                                            </tr>
+                                        }
 
                                     </tbody>
                                 </table>
@@ -85,18 +102,18 @@
 
                                 <div class="form-group">
                                     <label>Totales:</label>
-                                    <input type="number" class="form-control" readonly />
+                                    <InputNumber class="form-control" @bind-Value="Totales" readonly />
                                 </div>
                                 
                                 <div class="form-group">
                                     <label></label>
-                                    <input type="number" class="form-control" readonly />
+                                    <InputNumber class="form-control text-right" @bind-Value="TotalCobrado" readonly />
                                 </div>
                             </div>
                         
                             <div class="form-group">
                                 <label>Observaciones:</label>
-                                <textArea class="form-control"/>
+                                <InputTextArea class="form-control" @bind-Value="Cobro.Observaciones"/>
                             </div>
 
                         </form>
@@ -132,19 +149,44 @@
 </EditForm>
 
 @code {
-    public Cobros Cobro { get; set; } = new Cobros();
-    public List<Clientes> Clientes { get; set; } = new List<Clientes>();
-    public Clientes Cliente { get; set; }
+        public Cobros Cobro { get; set; } = new Cobros();
+        public List<Clientes> Clientes { get; set; } = new List<Clientes>();
+        public Clientes Cliente { get; set; }
+        public List<DetalleWrapper> Detalle { get; set; } = new List<DetalleWrapper>();
+        public int Totales { get; set; }
+        public float TotalCobrado { get; set; }
 
-    protected override void OnInitialized()
-    {
-        base.OnInitialized();
-    }
+        protected override void OnInitialized()
+        {
+            base.OnInitialized();
 
-    public void Buscar()
-    {
+            Clientes = ClientesBLL.ObtenerLista(c => true);
+        }
 
-    }
+        public void Buscar()
+        {
+            var encontrado = CobrosBLL.Buscar(Cobro.CobroID);
+
+            if (encontrado != null)
+            {
+                Nuevo();
+                this.Cobro = encontrado;
+                GenerarDetalleBuscar();
+                AjustarTotales();
+            }
+            else
+                toast.ShowWarning("Cobro no encontrado");
+
+        }
+
+        public void GenerarDetalleBuscar()
+        {
+            foreach (var detalle in Cobro.Detalle)
+            {
+                var cobroDetalle = new DetalleWrapper() { Venta = VentasBLL.Buscar(detalle.VentaID), Cobrado = detalle.Cobrado, Pagado = true };
+                Detalle.Add(cobroDetalle);
+            }
+        }
 
     public void BuscarVentasCliente()
     {
@@ -161,28 +203,101 @@
     {
         var cobrosCantidad = Cliente.Ventas.Count;
 
-        Cobro.Detalle = new List<CobrosDetalle>(new CobrosDetalle[cobrosCantidad]);
+        Detalle = new List<DetalleWrapper>(new DetalleWrapper[cobrosCantidad]);
 
         for(int i = 0; i < cobrosCantidad; i++)
         {
             var venta = Cliente.Ventas[i];
-            Cobro.Detalle[i] = new CobrosDetalle { VentaID = venta.VentaID };
+            Detalle[i] = new DetalleWrapper { Venta = venta };
+        }
+    }
+
+    public void CobrarVenta(DetalleWrapper detalle)
+    {
+        detalle.Pagado = true;
+        AjustarTotales();
+    }
+
+    public void CobrarTotalVenta(DetalleWrapper detalle, object value)
+    {
+        detalle.Pagado = (bool)value;
+
+        if (detalle.Pagado)
+            detalle.Cobrado = (float)detalle.Venta.Balance;
+        else
+            detalle.Cobrado = 0;
+
+        AjustarTotales();
+    }
+
+    public void AjustarTotales()
+    {
+        Totales = 0;
+        TotalCobrado = 0;
+
+        var detalles = Detalle.FindAll(d => d.Cobrado > 0);
+
+        Totales = detalles.Count;
+
+        foreach(var detalle in detalles)
+        {
+            TotalCobrado += detalle.Cobrado;
         }
     }
 
     public void Nuevo()
     {
-
+        Cobro = new Cobros();
+        Cliente = new Clientes();
+        Detalle = new List<DetalleWrapper>();
+        Totales = 0;
+        TotalCobrado = 0;
     }
 
     public void Guardar()
     {
+        GenerarDetalleGuardar();
 
+        bool guardado = CobrosBLL.Guardar(Cobro);
+
+        if (guardado)
+        {
+            Nuevo();
+            toast.ShowSuccess("Cobro guardado correctamente");
+        }
+        else
+            toast.ShowError("No se puedo guardar el cobro");
+    }
+
+    public void GenerarDetalleGuardar()
+    {
+        Cobro.Detalle.Clear();
+
+        foreach(var detalle in Detalle)
+        {
+            var cobroDetalle = new CobrosDetalle() { VentaID = detalle.Venta.VentaID, Cobrado = detalle.Cobrado };
+            Cobro.Detalle.Add(cobroDetalle);
+        }
     }
 
     public void Eliminar()
     {
+        bool eliminado = CobrosBLL.Eliminar(Cobro.CobroID);
 
+        if (eliminado)
+        {
+            Nuevo();
+            toast.ShowSuccess("Cobro eliminado correctamente");
+        }
+        else
+            toast.ShowError("No se pudo eliminar el cobro");
+    }
+
+    public class DetalleWrapper
+    {
+        public Ventas Venta { get; set; }
+        public float Cobrado { get; set; }
+        public bool Pagado { get; set; }
     }
 
 }
