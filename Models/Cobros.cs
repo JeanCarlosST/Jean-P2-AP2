@@ -12,6 +12,8 @@ namespace Jean_P2_AP2.Models
         [Key]
         public int CobroID { get; set; }
         public DateTime Fecha { get; set; } = DateTime.Now;
+
+        [RegularExpression(@"^[1-9]\d*$", ErrorMessage = "Seleccione un cliente")]
         public int ClienteID { get; set; }
         public string Observaciones { get; set; }
 
