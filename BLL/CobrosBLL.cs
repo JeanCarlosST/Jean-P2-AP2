@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Threading.Tasks;
 
 namespace Jean_P2_AP2.BLL
@@ -182,5 +183,25 @@ namespace Jean_P2_AP2.BLL
             return found;
         }
 
+        public static List<Cobros> ObtenerLista(Expression<Func<Cobros, bool>> criterio)
+        {
+            Contexto contexto = new Contexto();
+            List<Cobros> cobros = new List<Cobros>();
+
+            try
+            {
+                cobros = contexto.Cobros.Where(criterio).ToList();
+            }
+            catch
+            {
+                throw;
+            }
+            finally
+            {
+                contexto.Dispose();
+            }
+
+            return cobros;
+        }
     }
 }
