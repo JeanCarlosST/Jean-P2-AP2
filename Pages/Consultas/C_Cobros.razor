@@ -46,6 +46,7 @@
                                     <th>Fecha</th>
                                     <th>Cliente</th>
                                     <th>Observaciones</th>
+                                    <th>Total</th>
                                     <th></th>
                                 </tr>
                             </thead>
@@ -53,12 +54,22 @@
                                 @foreach (var cobro in Cobros)
                                 {
                                     var cliente = ClientesBLL.Buscar(cobro.ClienteID);
-                                    <tr>
-                                        <th class="align-middle">@cobro.CobroID</th>
-                                        <td class="align-middle">@cobro.Fecha</td>
-                                        <td class="align-middle">@cliente.Nombres</td>
-                                        <td class="align-middle">@cobro.Observaciones</td>
-                                    </tr>
+                                    var total = 0f;
+                                    foreach (var detalle in cobro.Detalle)
+                                        total += detalle.Cobrado;
+
+                                <tr>
+                                    <th class="align-middle">@cobro.CobroID</th>
+                                    <td class="align-middle">@cobro.Fecha</td>
+                                    <td class="align-middle">@cliente.Nombres</td>
+                                    <td class="align-middle">@cobro.Observaciones</td>
+                                    <td class="align-middle">@total.ToString("N2")</td>
+                                    <td class="d-flex justify-content-center">
+                                        <a class="btn btn-success" type="button" href="/r_cobros/@cobro.CobroID">
+                                            <span class="oi oi-pencil"></span>
+                                        </a>
+                                    </td>
+                                </tr>
                                 }
                             </tbody>
                         </table>

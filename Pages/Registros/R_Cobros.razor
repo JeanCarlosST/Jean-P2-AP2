@@ -1,4 +1,5 @@
 ﻿@page "/r_cobros"
+@page "/r_cobros/{CobroID:int}"
 @inject IToastService toast
 <EditForm Model="Cobro" OnValidSubmit="Guardar">
     <DataAnnotationsValidator/>
@@ -151,6 +152,8 @@
 
 @code {
     public Cobros Cobro { get; set; } = new Cobros();
+    [Parameter]
+    public int CobroID { get; set; }
     public List<Clientes> Clientes { get; set; } = new List<Clientes>();
     public Clientes Cliente { get; set; }
     public List<DetalleWrapper> Detalle { get; set; } = new List<DetalleWrapper>();
@@ -162,6 +165,19 @@
         base.OnInitialized();
 
         Clientes = ClientesBLL.ObtenerLista(c => true);
+
+        if (CobroID != 0)
+        {
+            var encontrado = CobrosBLL.Buscar(CobroID);
+
+            if (encontrado != null)
+            {
+                Nuevo();
+                this.Cobro = encontrado;
+                GenerarDetalleBuscar();
+                AjustarTotales();
+            }
+        }
     }
 
     public void Buscar()
