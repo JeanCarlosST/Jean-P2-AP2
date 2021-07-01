@@ -13,15 +13,11 @@ namespace Jean_P2_AP2.DAL
         public DbSet<Ventas> Ventas { get; set; }
         public DbSet<Cobros> Cobros { get; set; }
 
-        //public Contexto() { }
-
-        //public Contexto(DbContextOptions<Contexto> options) : base(options) { }
-
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
             base.OnConfiguring(optionsBuilder);
 
-            optionsBuilder.UseSqlServer(@"Server=localhost\SQLEXPRESS;Database=CobrosDb;Trusted_Connection=True;");
+            optionsBuilder.UseSqlite(@"Data Source=Data\Cobros.db");
         }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
