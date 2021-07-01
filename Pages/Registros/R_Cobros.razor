@@ -45,6 +45,7 @@
                                         <option value="@cliente.ClienteID">@cliente.Nombres</option>
                                     }
                                 </InputSelect>
+                                <ValidationMessage For="() => Cobro.ClienteID"/>
                             </div>
 
                             <fieldset class="form-group border border-2 p-2">
@@ -76,7 +77,7 @@
                                                 <td class="text-center align-baseline">@detalle.Venta.Balance</td>
                                                 <td class="d-flex justify-content-center">
                                                     <input type="number" class="form-control text-right w-50" value="@detalle.Cobrado" min="1" max="99999"
-                                                           @onchange="eventArgs => { detalle.Cobrado = Convert.ToSingle(eventArgs.Value); CobrarVenta(detalle); }"/>
+                                                           @onchange="eventArgs => { detalle.Cobrado = ToFloat(eventArgs.Value) ; CobrarVenta(detalle); }"/>
                                                     @*<InputNumber class="form-control w-50" @onchange="AjustarTotales" @bind-Value="detalle.Cobrado"/>*@
                                                 </td>
                                                 <td class="text-center">
@@ -149,44 +150,44 @@
 </EditForm>
 
 @code {
-        public Cobros Cobro { get; set; } = new Cobros();
-        public List<Clientes> Clientes { get; set; } = new List<Clientes>();
-        public Clientes Cliente { get; set; }
-        public List<DetalleWrapper> Detalle { get; set; } = new List<DetalleWrapper>();
-        public int Totales { get; set; }
-        public float TotalCobrado { get; set; }
+    public Cobros Cobro { get; set; } = new Cobros();
+    public List<Clientes> Clientes { get; set; } = new List<Clientes>();
+    public Clientes Cliente { get; set; }
+    public List<DetalleWrapper> Detalle { get; set; } = new List<DetalleWrapper>();
+    public int Totales { get; set; }
+    public float TotalCobrado { get; set; }
 
-        protected override void OnInitialized()
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+
+        Clientes = ClientesBLL.ObtenerLista(c => true);
+    }
+
+    public void Buscar()
+    {
+        var encontrado = CobrosBLL.Buscar(Cobro.CobroID);
+
+        if (encontrado != null)
         {
-            base.OnInitialized();
-
-            Clientes = ClientesBLL.ObtenerLista(c => true);
+            Nuevo();
+            this.Cobro = encontrado;
+            GenerarDetalleBuscar();
+            AjustarTotales();
         }
+        else
+            toast.ShowWarning("Cobro no encontrado");
 
-        public void Buscar()
+    }
+
+    public void GenerarDetalleBuscar()
+    {
+        foreach (var detalle in Cobro.Detalle)
         {
-            var encontrado = CobrosBLL.Buscar(Cobro.CobroID);
-
-            if (encontrado != null)
-            {
-                Nuevo();
-                this.Cobro = encontrado;
-                GenerarDetalleBuscar();
-                AjustarTotales();
-            }
-            else
-                toast.ShowWarning("Cobro no encontrado");
-
+            var cobroDetalle = new DetalleWrapper() { Venta = VentasBLL.Buscar(detalle.VentaID), Cobrado = detalle.Cobrado, Pagado = true };
+            Detalle.Add(cobroDetalle);
         }
-
-        public void GenerarDetalleBuscar()
-        {
-            foreach (var detalle in Cobro.Detalle)
-            {
-                var cobroDetalle = new DetalleWrapper() { Venta = VentasBLL.Buscar(detalle.VentaID), Cobrado = detalle.Cobrado, Pagado = true };
-                Detalle.Add(cobroDetalle);
-            }
-        }
+    }
 
     public void BuscarVentasCliente()
     {
@@ -256,6 +257,9 @@
 
     public void Guardar()
     {
+        if (!Validar())
+            return;
+
         GenerarDetalleGuardar();
 
         bool guardado = CobrosBLL.Guardar(Cobro);
@@ -267,6 +271,17 @@
         }
         else
             toast.ShowError("No se puedo guardar el cobro");
+    }
+
+    public bool Validar()
+    {
+        if(!Detalle.Any(d => d.Cobrado > 0f))
+        {
+            toast.ShowWarning("Haga por lo menos un cobro");
+            return false;
+        }
+
+        return true;
     }
 
     public void GenerarDetalleGuardar()
@@ -291,6 +306,18 @@
         }
         else
             toast.ShowError("No se pudo eliminar el cobro");
+    }
+
+    public float ToFloat(object? value)
+    {
+        try
+        {
+            return Convert.ToSingle(value);
+        }
+        catch
+        {
+            return 0f;
+        }
     }
 
     public class DetalleWrapper
