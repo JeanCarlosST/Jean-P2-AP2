@@ -190,7 +190,9 @@ namespace Jean_P2_AP2.BLL
 
             try
             {
-                cobros = contexto.Cobros.Where(criterio).ToList();
+                cobros = contexto.Cobros.Where(criterio)
+                    .Include(c => c.Detalle)
+                    .ToList();
             }
             catch
             {
