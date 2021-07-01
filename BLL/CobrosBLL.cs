@@ -32,6 +32,7 @@ namespace Jean_P2_AP2.BLL
                 {
                     Ventas venta = contexto.Ventas.Find(d.VentaID);
                     venta.Balance -= d.Cobrado;
+                    contexto.Entry(venta).State = EntityState.Modified;
                 }
 
                 insertado = contexto.SaveChanges() > 0;
@@ -61,6 +62,7 @@ namespace Jean_P2_AP2.BLL
                 {
                     Ventas venta = contexto.Ventas.Find(d.VentaID);
                     venta.Balance += d.Cobrado;
+                    contexto.Entry(venta).State = EntityState.Modified;
                 }
 
                 contexto.Database.ExecuteSqlRaw($"delete from CobrosDetalle where CobroID = {cobro.CobroID}");
@@ -74,6 +76,7 @@ namespace Jean_P2_AP2.BLL
                 {
                     Ventas venta = contexto.Ventas.Find(d.VentaID);
                     venta.Balance -= d.Cobrado;
+                    contexto.Entry(venta).State = EntityState.Modified;
                 }
 
                 contexto.Entry(cobro).State = EntityState.Modified;
@@ -100,15 +103,16 @@ namespace Jean_P2_AP2.BLL
 
             try
             {
-                var cobro = contexto.Cobros.Find(id);
+                var cobro = Buscar(id);
 
                 if (cobro != null)
                 {
                     List<CobrosDetalle> viejosDetalles = Buscar(cobro.CobroID).Detalle;
                     foreach (CobrosDetalle d in viejosDetalles)
                     {
-                        Ventas venta = VentasBLL.Buscar(d.VentaID);
+                        Ventas venta = contexto.Ventas.Find(d.VentaID);
                         venta.Balance += d.Cobrado;
+                        contexto.Entry(venta).State = EntityState.Modified;
                     }
 
                     contexto.Cobros.Remove(cobro);
